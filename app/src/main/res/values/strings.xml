@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">ChatApp</string>
+    <string name="action_settings">Settings</string>
+
+    <!--Share-->
+    <string name="share_with">Chia sẻ</string>
+    <string name="send_email_with">Gửi mail nhà phát triển</string>
+    <string name="text_share_my_app">@string/app_name</string>
+
+</resources>
