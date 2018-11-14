@@ -4,7 +4,7 @@ import com.ging.chat.BuildConfig;
 
 public class Debug {
 
-    public static final String TAG = "law_book/";
+    public static final String TAG = "chat_app/";
 
     public static final boolean debug = BuildConfig.DEBUG;
 

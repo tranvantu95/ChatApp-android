@@ -3,6 +3,7 @@ package com.ging.chat;
 import android.app.Activity;
 import android.app.Application;
 import android.arch.lifecycle.ViewModel;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -12,6 +13,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.ging.chat.model.AppModel;
+import com.ging.chat.service.SocketService;
 import com.ging.chat.utils.General;
 import com.ging.chat.utils.ModelUtils;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -100,6 +102,9 @@ public class MyApplication extends Application implements SharedPreferences.OnSh
                 numActivityCreated--;
             }
         });
+
+        //
+        startService(new Intent(getApplicationContext(), SocketService.class));
     }
 
     @Override
