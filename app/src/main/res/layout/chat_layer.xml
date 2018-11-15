@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:background="@color/colorGreyLight">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,40 +14,48 @@
             android:id="@+id/question"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Question"/>
+            android:padding="16dp"
+            android:text="Question"
+            android:textColor="@color/textColor"/>
 
         <RadioGroup
+            android:id="@+id/answer"
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:padding="8dp">
 
             <RadioButton
                 android:id="@+id/answer_a"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="A"/>
+                android:text="A"
+                android:textColor="@color/textColor"/>
 
             <RadioButton
                 android:id="@+id/answer_b"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="B"/>
+                android:text="B"
+                android:textColor="@color/textColor"/>
 
             <RadioButton
                 android:id="@+id/answer_c"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="C"/>
+                android:text="C"
+                android:textColor="@color/textColor"/>
 
             <RadioButton
                 android:id="@+id/answer_d"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="D"/>
+                android:text="D"
+                android:textColor="@color/textColor"/>
 
         </RadioGroup>
 

@@ -1,6 +1,7 @@
 package com.ging.chat.service;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -87,5 +88,16 @@ public class SocketService extends Service {
     private void emit(String event, String value) {
         if(mSocket == null || !mSocket.connected()) return;
         mSocket.emit(event, value);
+    }
+
+    public static void emitAnswer(Context context, String answer) {
+        Intent intent = new Intent(context, SocketService.class);
+        intent.setAction("emit");
+        Bundle data = new Bundle();
+        data.putString("event", "answer");
+        data.putString("value", answer);
+        intent.putExtras(data);
+
+        context.startService(intent);
     }
 }
