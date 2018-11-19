@@ -3,13 +3,18 @@ package com.ging.chat.service;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.ging.chat.ChatLayer;
+import com.ging.chat.NotificationPlayer;
 import com.ging.chat.R;
 import com.ging.chat.activity.MainActivity;
+import com.ging.chat.config.Debug;
 
 /**
  * Foreground service. Creates a head view.
@@ -20,6 +25,46 @@ public class ChatService extends Service {
     private final static int FOREGROUND_ID = 999;
 
     private ChatLayer mChatLayer;
+
+    private ServiceConnection notificationConnection;
+    private NotificationService notificationService;
+    private NotificationPlayer notificationPlayer;
+
+    //
+    private void bindNotificationService() {
+        if(notificationConnection != null) return;
+        Log.d(Debug.TAG, "bindNotificationService");
+
+        notificationConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                NotificationService.LocalBinder binder = (NotificationService.LocalBinder) service;
+                notificationService = binder.getService();
+                notificationPlayer = notificationService.getNotificationPlayer();
+
+                notificationService.showNotification(true);
+                startForeground(NotificationService.NOTIFICATION_ID, notificationPlayer.getNotification());
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {}
+        };
+
+        bindService(new Intent(getApplicationContext(), NotificationService.class),
+                notificationConnection, BIND_AUTO_CREATE);
+    }
+
+    private void unbindNotificationService() {
+        if(notificationConnection != null) {
+            Log.d(Debug.TAG, "unbindNotificationService");
+            unbindService(notificationConnection);
+            notificationConnection = null;
+        }
+    }
+
+    private boolean isShowingNotification() {
+        return notificationService != null && notificationService.isShowingNotification();
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -34,22 +79,29 @@ public class ChatService extends Service {
 
         initChatLayer();
 
-        PendingIntent pendingIntent = createPendingIntent();
-        Notification notification = createNotification(pendingIntent);
+//        PendingIntent pendingIntent = createPendingIntent();
+//        Notification notification = createNotification(pendingIntent);
+//        startForeground(FOREGROUND_ID, notification);
 
-        startForeground(FOREGROUND_ID, notification);
+        bindNotificationService();
 
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if(("stop_service").equals(intent.getAction())) {
+            stopSelf();
+        }
+
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
+        unbindNotificationService();
         destroyChatLayer();
-        stopForeground(true);
+
+//        stopForeground(true);
 
         logServiceEnded();
     }

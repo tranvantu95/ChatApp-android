@@ -25,6 +25,7 @@
 
         <service android:name=".service.SocketService" />
         <service android:name=".service.ChatService" />
+        <service android:name=".service.NotificationService" />
 
         <service android:name=".chatheads.HeadService" />
 

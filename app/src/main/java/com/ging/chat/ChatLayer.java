@@ -2,22 +2,31 @@ package com.ging.chat;
 
 import android.arch.lifecycle.Observer;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.ging.chat.config.Debug;
 import com.ging.chat.model.ChatModel;
+import com.ging.chat.service.ChatService;
+import com.ging.chat.service.NotificationService;
 import com.ging.chat.service.SocketService;
+import com.ging.chat.utils.AppUtils;
 import com.ging.chat.utils.ModelUtils;
 
 /**
@@ -29,65 +38,73 @@ public class ChatLayer extends FrameLayout {
 
     private WindowManager mWindowManager;
 
-    private Observer<String> questionObserver;
+    private WindowManager.LayoutParams params;
+
+    private Observer<String> questionObserver, answerObserver;
+
+    private Point point = new Point();
+
+    private View trashLayer;
+    private Rect trashRect = new Rect();
+
+    private boolean opened;
 
     public ChatLayer(Context context) {
         super(context);
 
         addToWindowManager();
         inflateView();
+
+        setChatHub(true);
     }
 
     private void addToWindowManager() {
-        final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
+        params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.BOTTOM;
+
+        WindowManager.LayoutParams params2 = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT);
+        params2.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+
+        trashLayer = LayoutInflater.from(getContext()).inflate(R.layout.trash_layer, null);
 
         mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+        mWindowManager.addView(trashLayer, params2);
         mWindowManager.addView(this, params);
 
-        // Support dragging the image view
-//        final ImageView imageView = (ImageView) mFrameLayout.findViewById(R.id.imageView);
-////        imageView.setOnTouchListener(new OnTouchListener() {
-////            private int initX, initY;
-////            private int initTouchX, initTouchY;
-////
-////            @Override
-////            public boolean onTouch(View v, MotionEvent event) {
-////                int x = (int)event.getRawX();
-////                int y = (int)event.getRawY();
-////
-////                switch (event.getAction()) {
-////                    case MotionEvent.ACTION_DOWN:
-////                        initX = params.x;
-////                        initY = params.y;
-////                        initTouchX = x;
-////                        initTouchY = y;
-////                        return true;
-////
-////                    case MotionEvent.ACTION_UP:
-////                        return true;
-////
-////                    case MotionEvent.ACTION_MOVE:
-////                        params.x = initX + (x - initTouchX);
-////                        params.y = initY + (y - initTouchY);
-////
-////                        // Invalidate layout
-////                        mWindowManager.updateViewLayout(mFrameLayout, params);
-////                        return true;
-////                }
-////                return false;
-////            }
-////        });
+        post(new Runnable() {
+            @Override
+            public void run() {
+                trashRect = getRectOnScreen(trashLayer);
+                trashLayer.setVisibility(GONE);
+
+//                Log.d(Debug.TAG, "x: " + trashRect.centerX() + ", y: " + trashRect.centerY());
+//                Log.d(Debug.TAG, "left: " + trashRect.left + ", right: " + trashRect.right);
+//                Log.d(Debug.TAG, "top: " + trashRect.top + ", bot: " + trashRect.bottom);
+//                Log.d(Debug.TAG, "width: " + trashRect.width() + ", height: " + trashRect.height());
+
+            }
+        });
     }
 
     private void inflateView() {
         LayoutInflater layoutInflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         layoutInflater.inflate(R.layout.chat_layer, this);
+
+        findViewById(R.id.btn_close).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setChatHub(false);
+            }
+        });
 
         ModelUtils.ofApp().get(ChatModel.class).getQuestion().observeForever(questionObserver = new Observer<String>() {
             @Override
@@ -96,14 +113,129 @@ public class ChatLayer extends FrameLayout {
             }
         });
 
+        ModelUtils.ofApp().get(ChatModel.class).getAnswer().observeForever(answerObserver = new Observer<String>() {
+            @Override
+            public void onChanged(@Nullable String s) {
+                if(s == null) return;
+                int id = NotificationPlayer.answerMap.get(s);
+                ((RadioButton) findViewById(id)).setChecked(true);
+            }
+        });
+
         RadioGroup answer = findViewById(R.id.answer);
         answer.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                SocketService.emitAnswer(getContext(),
-                        ((RadioButton) findViewById(checkedId)).getText().toString());
+//                SocketService.emitAnswer(getContext(),
+//                        ((RadioButton) findViewById(checkedId)).getText().toString());
+
+                String answer = "answer_" + ((RadioButton) findViewById(checkedId)).getText().toString().toLowerCase();
+                NotificationService.setAnswer(getContext().getApplicationContext(), answer);
             }
         });
+
+        // Support dragging the image view
+        ImageView iconChat = findViewById(R.id.icon_chat);
+        iconChat.setOnTouchListener(new OnTouchListener() {
+            private int initTouchX, initTouchY;
+            private int initX, initY;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int x = (int) event.getRawX();
+                int y = (int) event.getRawY();
+
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initTouchX = x;
+                        initTouchY = y;
+                        initX = params.x;
+                        initY = params.y;
+                        trashLayer.setVisibility(VISIBLE);
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                        int sx = params.x - initX;
+                        int sy = params.y - initY;
+                        float s = (float) Math.sqrt(sx*sx + sy*sy);
+                        s = AppUtils.convertPixelsToDp(s, v.getContext());
+                        if(s < 1) v.performClick();
+
+                        trashLayer.setVisibility(GONE);
+                        Rect rect = getRectOnScreen(ChatLayer.this);
+                        if(intersect(trashRect, rect)) v.getContext().stopService(new Intent(v.getContext(), ChatService.class));
+
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        int dx = x - initTouchX;
+                        int dy = y - initTouchY;
+                        params.x = initX + dx;
+                        params.y = initY + dy;
+                        updateThis();
+
+                        post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Rect rect = getRectOnScreen(ChatLayer.this);
+                                if(intersect(trashRect, rect)) trashLayer.setBackgroundColor(Color.RED);
+                                else trashLayer.setBackgroundColor(Color.YELLOW);
+                            }
+                        });
+
+                        return true;
+                }
+                return false;
+            }
+        });
+
+        iconChat.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setChatHub(true);
+            }
+        });
+    }
+
+    private boolean intersect(Rect rect1, Rect rect2) {
+        return rect1.left < rect2.right
+                && rect1.right > rect2.left
+                && rect1.top < rect2.bottom
+                && rect1.bottom > rect2.top;
+    }
+
+    private Rect getRectOnScreen(View view) {
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        return new Rect(location[0], location[1], location[0] + view.getWidth(),
+                location[1] + view.getHeight());
+    }
+
+    private void updateThis() {
+        mWindowManager.updateViewLayout(this, params);
+    }
+
+    private void toggleChatHub() {
+        setChatHub(!opened);
+    }
+
+    private void setChatHub(boolean isOpen) {
+        this.opened = isOpen;
+        findViewById(R.id.icon_chat).setVisibility(!isOpen ? VISIBLE : GONE);
+        findViewById(R.id.chat_hub).setVisibility(isOpen ? VISIBLE : GONE);
+        params.width = isOpen ? WindowManager.LayoutParams.MATCH_PARENT : WindowManager.LayoutParams.WRAP_CONTENT;
+        params.gravity = isOpen ? Gravity.BOTTOM : 0;
+        if(isOpen) {
+            point.x = params.x;
+            point.y = params.y;
+            params.x = 0;
+            params.y = 0;
+        }
+        else {
+            params.x = point.x;
+            params.y = point.y;
+        }
+        updateThis();
     }
 
     /**
@@ -111,19 +243,22 @@ public class ChatLayer extends FrameLayout {
      */
     public void destroy() {
         mWindowManager.removeView(this);
+        mWindowManager.removeView(trashLayer);
         ModelUtils.ofApp().get(ChatModel.class).getQuestion().removeObserver(questionObserver);
+        ModelUtils.ofApp().get(ChatModel.class).getAnswer().removeObserver(answerObserver);
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         Log.d(Debug.TAG, "dispatchKeyEvent");
-//        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-//            // handle back press
-//            // if (event.getAction() == KeyEvent.ACTION_DOWN)
-//            return true;
-//        }
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            // handle back press
+            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+                if(opened) toggleChatHub();
+                return true;
+            }
+        }
         return super.dispatchKeyEvent(event);
-//        return false;
     }
 
 }

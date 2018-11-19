@@ -11,4 +11,12 @@ public class ChatModel extends ViewModel {
         if(question == null) question = new MutableLiveData<>();
         return question;
     }
+
+    private MutableLiveData<String> answer;
+
+    public MutableLiveData<String> getAnswer() {
+        if(answer == null) answer = new MutableLiveData<>();
+        return answer;
+    }
+
 }
