@@ -22,10 +22,10 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.ging.chat.config.Debug;
+import com.ging.chat.config.Define;
 import com.ging.chat.model.ChatModel;
 import com.ging.chat.service.ChatService;
 import com.ging.chat.service.NotificationService;
-import com.ging.chat.service.SocketService;
 import com.ging.chat.utils.AppUtils;
 import com.ging.chat.utils.ModelUtils;
 
@@ -117,7 +117,7 @@ public class ChatLayer extends FrameLayout {
             @Override
             public void onChanged(@Nullable String s) {
                 if(s == null) return;
-                int id = NotificationPlayer.answerMap.get(s);
+                int id = Define.Answer.mapIds.get(s);
                 ((RadioButton) findViewById(id)).setChecked(true);
             }
         });
@@ -126,11 +126,8 @@ public class ChatLayer extends FrameLayout {
         answer.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-//                SocketService.emitAnswer(getContext(),
-//                        ((RadioButton) findViewById(checkedId)).getText().toString());
-
-                String answer = "answer_" + ((RadioButton) findViewById(checkedId)).getText().toString().toLowerCase();
-                NotificationService.setAnswer(getContext().getApplicationContext(), answer);
+                String answer = ((RadioButton) findViewById(checkedId)).getText().toString().toUpperCase();
+                ChatService.emitAnswer(getContext().getApplicationContext(), answer);
             }
         });
 

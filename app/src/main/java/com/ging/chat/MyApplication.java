@@ -39,6 +39,8 @@ public class MyApplication extends Application implements SharedPreferences.OnSh
         super.onCreate();
         Log.d(Debug.TAG + TAG, "onCreate");
 
+        Define.Answer.buildMapIds();
+
         // set support vector drawable for api < 21
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
 

@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
@@ -15,6 +16,8 @@ import com.ging.chat.NotificationPlayer;
 import com.ging.chat.R;
 import com.ging.chat.activity.MainActivity;
 import com.ging.chat.config.Debug;
+import com.ging.chat.model.ChatModel;
+import com.ging.chat.utils.ModelUtils;
 
 /**
  * Foreground service. Creates a head view.
@@ -89,7 +92,15 @@ public class ChatService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(("stop_service").equals(intent.getAction())) {
+        if(intent.getAction() != null && intent.getAction().contains("emit_answer")) {
+            String answer = intent.getStringExtra("answer");
+            Log.d(Debug.TAG, "emitAnswer " + answer);
+
+            ModelUtils.ofApp().get(ChatModel.class).getAnswer().setValue(answer);
+            SocketService.emitAnswer(getApplicationContext(), answer);
+            notificationService.showAnswer(answer);
+        }
+        else if(("stop_service").equals(intent.getAction())) {
             stopSelf();
         }
 
@@ -104,6 +115,17 @@ public class ChatService extends Service {
 //        stopForeground(true);
 
         logServiceEnded();
+    }
+
+    public static Intent createIntentEmitAnswer(Context context, String answer) {
+        Intent intent = new Intent(context.getApplicationContext(), ChatService.class);
+        intent.setAction("emit_answer");
+        intent.putExtra("answer", answer);
+        return intent;
+    }
+
+    public static void emitAnswer(Context context, String answer) {
+        context.getApplicationContext().startService(createIntentEmitAnswer(context, answer));
     }
 
     private void initChatLayer() {

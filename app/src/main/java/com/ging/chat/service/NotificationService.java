@@ -7,17 +7,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
-import android.widget.RadioButton;
 
 import com.ging.chat.NotificationPlayer;
-import com.ging.chat.config.Debug;
-import com.ging.chat.model.ChatModel;
-import com.ging.chat.utils.ModelUtils;
 
 public class NotificationService extends Service {
     
@@ -62,7 +57,6 @@ public class NotificationService extends Service {
     }
 
     public void showNotification(boolean startForeground) {
-        Log.d(TAG, "showNotification");
         if(!isShowingNotification) {
             isShowingNotification = true;
             saveIsShowingNotification();
@@ -77,7 +71,6 @@ public class NotificationService extends Service {
     }
 
     public void deleteNotification(){
-        Log.d(TAG, "deleteNotification");
         if(isShowingNotification) {
             isShowingNotification = false;
             saveIsShowingNotification();
@@ -119,11 +112,9 @@ public class NotificationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
 
-        if(intent.getAction() != null && intent.getAction().startsWith("answer")) {
-            showAnswer(intent.getAction());
-
-            String answer = intent.getAction().split("_")[1].toUpperCase();
-            SocketService.emitAnswer(getApplicationContext(), answer);
+        if(("show_answer").equals(intent.getAction())) {
+            String answer = intent.getStringExtra("answer");
+            showAnswer(answer);
         }
 
         return START_STICKY;
@@ -162,16 +153,16 @@ public class NotificationService extends Service {
         deleteNotification();
     }
 
-    private void showAnswer(String answer) {
-        Log.d(TAG, "showAnswer " + answer);
-        notificationPlayer.setAnswer(answer);
+    public void showAnswer(String answer) {
+        notificationPlayer.showAnswer(answer);
         showNotification(true);
-        ModelUtils.ofApp().get(ChatModel.class).getAnswer().setValue(answer);
     }
 
-    public static void setAnswer(Context context, String answer) {
+    public static void showAnswer(Context context, String answer) {
         Intent intent = new Intent(context, NotificationService.class);
-        intent.setAction(answer);
+        intent.setAction("show_answer");
+        intent.putExtra("answer", answer);
         context.startService(intent);
     }
+
 }

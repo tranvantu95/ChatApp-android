@@ -9,20 +9,14 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.widget.RemoteViews;
 
 import com.ging.chat.activity.MainActivity;
+import com.ging.chat.config.Define;
 import com.ging.chat.service.ChatService;
-import com.ging.chat.service.NotificationService;
 import com.ging.chat.utils.AppUtils;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class NotificationPlayer {
 
@@ -31,19 +25,7 @@ public class NotificationPlayer {
 
     private Notification notification;
 
-    public static final String ANSWER_A = "answer_a";
-    public static final String ANSWER_B = "answer_b";
-    public static final String ANSWER_C = "answer_c";
-    public static final String ANSWER_D = "answer_d";
-
-    public static Map<String, Integer> answerMap = new HashMap<>();
-
     public NotificationPlayer(Context context) {
-
-        answerMap.put(ANSWER_A, R.id.answer_a);
-        answerMap.put(ANSWER_B, R.id.answer_b);
-        answerMap.put(ANSWER_C, R.id.answer_c);
-        answerMap.put(ANSWER_D, R.id.answer_d);
 
         String chanelId = "com.ging.chat.notification";
         String chanelName = "ChatApp";
@@ -99,16 +81,16 @@ public class NotificationPlayer {
         return notification;
     }
 
-    private void setTextViewText(int viewId, String text) {
-        notification.contentView.setTextViewText(viewId, text);
-        if(currentVersionSupportBigNotification)
-            notification.bigContentView.setTextViewText(viewId, text);
-    }
-
     private void setTextColor(int viewId, int color) {
         notification.contentView.setTextColor(viewId, color);
         if(currentVersionSupportBigNotification)
             notification.bigContentView.setTextColor(viewId, color);
+    }
+
+    private void setTextViewText(int viewId, String text) {
+        notification.contentView.setTextViewText(viewId, text);
+        if(currentVersionSupportBigNotification)
+            notification.bigContentView.setTextViewText(viewId, text);
     }
 
     private void setImageViewBitmap(int viewId, Bitmap bitmap) {
@@ -117,14 +99,13 @@ public class NotificationPlayer {
             notification.bigContentView.setImageViewBitmap(viewId, bitmap);
     }
 
-    public void setAnswer(String answer) {
-        setAnswer(answerMap.get(answer));
-//        setTextViewText(R.id.answer_a, "G");
+    public void showAnswer(String answer) {
+        showAnswer(Define.Answer.mapIds.get(answer));
     }
 
-    private void setAnswer(int viewId) {
+    private void showAnswer(int viewId) {
         clearAnswer();
-        setTextColor(viewId, Color.GREEN);
+        setTextColor(viewId, Color.RED);
     }
 
     private void clearAnswer() {
@@ -141,34 +122,48 @@ public class NotificationPlayer {
             setListeners(context, notification.bigContentView);
     }
 
-    public static void setListeners(Context context, RemoteViews view) {
-        Intent answer_a = new Intent(context, NotificationService.class);
-        answer_a.setAction(ANSWER_A);
+    private static void setListeners(Context context, RemoteViews view) {
+        Intent intent;
+        PendingIntent pendingIntent;
 
-        Intent answer_b = new Intent(context, NotificationService.class);
-        answer_b.setAction(ANSWER_B);
+        intent = new Intent(context.getApplicationContext(), ChatService.class);
+        intent.setAction("emit_answer_a");
+        intent.putExtra("answer", Define.Answer.A);
 
-        Intent answer_c = new Intent(context, NotificationService.class);
-        answer_c.setAction(ANSWER_C);
+        pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        view.setOnClickPendingIntent(R.id.answer_a, pendingIntent);
 
-        Intent answer_d = new Intent(context, NotificationService.class);
-        answer_d.setAction(ANSWER_D);
+        intent = new Intent(context.getApplicationContext(), ChatService.class);
+        intent.setAction("emit_answer_b");
+        intent.putExtra("answer", Define.Answer.B);
 
-        PendingIntent pa = PendingIntent.getService(context.getApplicationContext(), 0, answer_a, PendingIntent.FLAG_UPDATE_CURRENT);
-        view.setOnClickPendingIntent(R.id.answer_a, pa);
+        pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        view.setOnClickPendingIntent(R.id.answer_b, pendingIntent);
 
-        PendingIntent pb = PendingIntent.getService(context.getApplicationContext(), 0, answer_b, PendingIntent.FLAG_UPDATE_CURRENT);
-        view.setOnClickPendingIntent(R.id.answer_b, pb);
+        intent = new Intent(context.getApplicationContext(), ChatService.class);
+        intent.setAction("emit_answer_c");
+        intent.putExtra("answer", Define.Answer.C);
 
-        PendingIntent pc = PendingIntent.getService(context.getApplicationContext(), 0, answer_c, PendingIntent.FLAG_UPDATE_CURRENT);
-        view.setOnClickPendingIntent(R.id.answer_c, pc);
+        pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        view.setOnClickPendingIntent(R.id.answer_c, pendingIntent);
 
-        PendingIntent pd = PendingIntent.getService(context.getApplicationContext(), 0, answer_d, PendingIntent.FLAG_UPDATE_CURRENT);
-        view.setOnClickPendingIntent(R.id.answer_d, pd);
+        intent = new Intent(context.getApplicationContext(), ChatService.class);
+        intent.setAction("emit_answer_d");
+        intent.putExtra("answer", Define.Answer.D);
 
-        Intent iStop = new Intent(context, ChatService.class);
-        iStop.setAction("stop_service");
-        PendingIntent pStop = PendingIntent.getService(context.getApplicationContext(), 0, iStop, PendingIntent.FLAG_UPDATE_CURRENT);
-        view.setOnClickPendingIntent(R.id.btn_close, pStop);
+        pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        view.setOnClickPendingIntent(R.id.answer_d, pendingIntent);
+
+        intent = new Intent(context, ChatService.class);
+        intent.setAction("stop_service");
+
+        pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        view.setOnClickPendingIntent(R.id.btn_close, pendingIntent);
     }
+
 }

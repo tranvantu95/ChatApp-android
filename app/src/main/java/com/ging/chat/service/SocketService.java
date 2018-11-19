@@ -90,14 +90,19 @@ public class SocketService extends Service {
         mSocket.emit(event, value);
     }
 
-    public static void emitAnswer(Context context, String answer) {
+    private static void emit(Context context, String event, String value) {
         Intent intent = new Intent(context, SocketService.class);
         intent.setAction("emit");
+
         Bundle data = new Bundle();
-        data.putString("event", "answer");
-        data.putString("value", answer);
+        data.putString("event", event);
+        data.putString("value", value);
         intent.putExtras(data);
 
         context.startService(intent);
+    }
+
+    public static void emitAnswer(Context context, String answer) {
+        emit(context, "answer", answer);
     }
 }
