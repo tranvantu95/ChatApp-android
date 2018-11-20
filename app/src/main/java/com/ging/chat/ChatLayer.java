@@ -49,13 +49,31 @@ public class ChatLayer extends FrameLayout {
 
     private boolean opened;
 
+    private HardwareKeyWatcher mHardwareKeyWatcher;
+
     public ChatLayer(Context context) {
         super(context);
 
         addToWindowManager();
         inflateView();
 
-        setChatHub(true);
+        openChatHub(true);
+
+        mHardwareKeyWatcher = new HardwareKeyWatcher(context);
+        mHardwareKeyWatcher.setOnHardwareKeysPressedListenerListener(new HardwareKeyWatcher.OnHardwareKeysPressedListener() {
+            @Override
+            public void onHomePressed() {
+                Log.d(Debug.TAG, "onHomePressed");
+                if(opened) toggleChatHub();
+            }
+
+            @Override
+            public void onRecentAppsPressed() {
+                Log.d(Debug.TAG, "onRecentAppsPressed");
+                if(opened) toggleChatHub();
+            }
+        });
+        mHardwareKeyWatcher.startWatch();
     }
 
     private void addToWindowManager() {
@@ -70,7 +88,8 @@ public class ChatLayer extends FrameLayout {
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 PixelFormat.TRANSLUCENT);
         params2.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
 
@@ -102,7 +121,7 @@ public class ChatLayer extends FrameLayout {
         findViewById(R.id.btn_close).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                setChatHub(false);
+                openChatHub(false);
             }
         });
 
@@ -189,7 +208,7 @@ public class ChatLayer extends FrameLayout {
         iconChat.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                setChatHub(true);
+                openChatHub(true);
             }
         });
     }
@@ -213,14 +232,16 @@ public class ChatLayer extends FrameLayout {
     }
 
     private void toggleChatHub() {
-        setChatHub(!opened);
+        openChatHub(!opened);
     }
 
-    private void setChatHub(boolean isOpen) {
+    private void openChatHub(boolean isOpen) {
         this.opened = isOpen;
         findViewById(R.id.icon_chat).setVisibility(!isOpen ? VISIBLE : GONE);
         findViewById(R.id.chat_hub).setVisibility(isOpen ? VISIBLE : GONE);
         params.width = isOpen ? WindowManager.LayoutParams.MATCH_PARENT : WindowManager.LayoutParams.WRAP_CONTENT;
+        params.flags = isOpen ? WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                : WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         params.gravity = isOpen ? Gravity.BOTTOM : 0;
         if(isOpen) {
             point.x = params.x;
@@ -239,6 +260,7 @@ public class ChatLayer extends FrameLayout {
      * Removes the view from window manager.
      */
     public void destroy() {
+        mHardwareKeyWatcher.stopWatch();
         mWindowManager.removeView(this);
         mWindowManager.removeView(trashLayer);
         ModelUtils.ofApp().get(ChatModel.class).getQuestion().removeObserver(questionObserver);
@@ -247,12 +269,10 @@ public class ChatLayer extends FrameLayout {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        Log.d(Debug.TAG, "dispatchKeyEvent");
+        Log.d(Debug.TAG, "dispatchKeyEvent " + event.getKeyCode());
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-            // handle back press
-            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
                 if(opened) toggleChatHub();
-                return true;
             }
         }
         return super.dispatchKeyEvent(event);
