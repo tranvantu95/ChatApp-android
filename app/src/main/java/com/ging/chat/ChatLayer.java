@@ -25,7 +25,6 @@ import com.ging.chat.config.Debug;
 import com.ging.chat.config.Define;
 import com.ging.chat.model.ChatModel;
 import com.ging.chat.service.ChatService;
-import com.ging.chat.service.NotificationService;
 import com.ging.chat.utils.AppUtils;
 import com.ging.chat.utils.ModelUtils;
 
@@ -93,7 +92,7 @@ public class ChatLayer extends FrameLayout {
                 PixelFormat.TRANSLUCENT);
         params2.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
 
-        trashLayer = LayoutInflater.from(getContext()).inflate(R.layout.trash_layer, null);
+        trashLayer = LayoutInflater.from(getContext()).inflate(R.layout.layout_trash, null);
 
         mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         mWindowManager.addView(trashLayer, params2);
@@ -116,7 +115,7 @@ public class ChatLayer extends FrameLayout {
 
     private void inflateView() {
         LayoutInflater layoutInflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        layoutInflater.inflate(R.layout.chat_layer, this);
+        layoutInflater.inflate(R.layout.layout_chat, this);
 
         findViewById(R.id.btn_close).setOnClickListener(new OnClickListener() {
             @Override

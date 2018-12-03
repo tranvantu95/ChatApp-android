@@ -19,4 +19,11 @@ public class AppModel extends ViewModel {
         return typeView;
     }
 
+    private MutableLiveData<User> user;
+
+    public MutableLiveData<User> getUser() {
+        if(user == null) user = new MutableLiveData<>();
+        return user;
+    }
+
 }

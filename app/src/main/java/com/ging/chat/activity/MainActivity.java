@@ -1,73 +1,73 @@
 package com.ging.chat.activity;
 
-import android.annotation.TargetApi;
-import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.Toast;
+import android.support.design.widget.BottomNavigationView;
+import android.support.v4.view.ViewPager;
+import android.view.MenuItem;
 
 import com.ging.chat.R;
 import com.ging.chat.activity.base.BaseActivity;
-import com.ging.chat.chatheads.PermissionChecker;
-import com.ging.chat.service.ChatService;
+import com.ging.chat.adapter.pager.MainAdapter;
 
 public class MainActivity extends BaseActivity {
 
-    private PermissionChecker mPermissionChecker;
+    private ViewPager viewPager;
+    private MainAdapter adapter;
 
-    private static boolean chatServiceCheckboxChecked;
+    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mPermissionChecker = new PermissionChecker(this);
-        if(!mPermissionChecker.isRequiredPermissionGranted()){
-            enableHeadServiceCheckbox(false);
-            Intent intent = mPermissionChecker.createRequiredPermissionIntent();
-            startActivityForResult(intent, PermissionChecker.REQUIRED_PERMISSION_REQUEST_CODE);
-        } else {
-            enableHeadServiceCheckbox(true);
-        }
+        viewPager = findViewById(R.id.view_pager);
+        adapter = new MainAdapter(getSupportFragmentManager());
+        viewPager.setAdapter(adapter);
 
-        ((CheckBox) findViewById(R.id.checkbox)).setChecked(chatServiceCheckboxChecked);
-
-        ((CheckBox) findViewById(R.id.checkbox)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        viewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                chatServiceCheckboxChecked = isChecked;
-                if(isChecked) startChatService();
-                else stopChatService();
+            public void onPageScrolled(int i, float v, int i1) {
+
+            }
+
+            @Override
+            public void onPageSelected(int i) {
+                switch (i) {
+                    case 0:
+                        bottomNavigationView.setSelectedItemId(R.id.nav_home);
+                        break;
+
+                    case 1:
+                        bottomNavigationView.setSelectedItemId(R.id.nav_profile);
+                        break;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int i) {
+
             }
         });
-    }
 
-    @TargetApi(Build.VERSION_CODES.M)
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PermissionChecker.REQUIRED_PERMISSION_REQUEST_CODE) {
-            if (!mPermissionChecker.isRequiredPermissionGranted()) {
-                Toast.makeText(getApplicationContext(), "Required permission is not granted. Please restart the app and grant required permission.", Toast.LENGTH_LONG).show();
-            } else {
-                enableHeadServiceCheckbox(true);
+        bottomNavigationView = findViewById(R.id.bottom_navigation_view);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.nav_home:
+                        viewPager.setCurrentItem(0, true);
+                        return true;
+
+                    case R.id.nav_profile:
+                        viewPager.setCurrentItem(1, true);
+                        return true;
+                }
+                return false;
             }
-        }
-    }
-
-    private void enableHeadServiceCheckbox(boolean enabled) {
-        ((CheckBox) findViewById(R.id.checkbox)).setEnabled(enabled);
-    }
-
-    private void startChatService() {
-        startService(new Intent(this, ChatService.class));
-    }
-
-    private void stopChatService() {
-        stopService(new Intent(this, ChatService.class));
+        });
     }
 
 }
