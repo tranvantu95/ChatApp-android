@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
 
     defaultConfig {
-        applicationId "com.ging.chat"
+        applicationId "com.ging.chatapp"
         minSdkVersion 16
         targetSdkVersion 28
         versionCode 1
@@ -13,14 +13,14 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
 
-//    signingConfigs {
-//        release {
-//            storeFile file('')
-//            keyAlias ""
-//            keyPassword ""
-//            storePassword ""
-//        }
-//    }
+    signingConfigs {
+        release {
+            storeFile file('chatapp.jks')
+            keyAlias "chatapp"
+            keyPassword "chatapp"
+            storePassword "chatapp"
+        }
+    }
 
     buildTypes {
         debug {
@@ -28,7 +28,7 @@ android {
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-//            signingConfig signingConfigs.release
+            signingConfig signingConfigs.release
         }
 
         release {
@@ -36,7 +36,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-//            signingConfig signingConfigs.release
+            signingConfig signingConfigs.release
         }
     }
 
@@ -52,9 +52,11 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    implementation 'com.google.firebase:firebase-core:16.0.5'
+    implementation 'com.google.firebase:firebase-core:16.0.6'
+    implementation 'com.google.firebase:firebase-auth:16.1.0'
     implementation 'com.google.firebase:firebase-storage:16.0.5'
     implementation 'com.google.firebase:firebase-messaging:17.3.4'
+    implementation 'com.facebook.android:facebook-login:4.35.0'
 
 //    implementation 'com.google.android.gms:play-services-ads:17.1.1'
 
@@ -101,3 +103,5 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
 }
+
+apply plugin: 'com.google.gms.google-services'
